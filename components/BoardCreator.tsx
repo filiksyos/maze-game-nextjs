@@ -38,17 +38,32 @@ export default function BoardCreator({
     const pos: Position = { x, y };
 
     if (mode === PlacementMode.ENTRANCE) {
-      // Only allow entrance on border
-      if (x === 0 || x === BOARD_SIZE - 1 || y === 0 || y === BOARD_SIZE - 1) {
+      // Toggle: if clicking on same cell, remove entrance
+      if (entrance && positionsEqual(entrance, pos)) {
+        setEntrance(null);
+      } else {
+        // If clicking on exit cell, remove exit
+        if (exit && positionsEqual(exit, pos)) {
+          setExit(null);
+        }
+        // Place entrance at new position
         setEntrance(pos);
       }
     } else if (mode === PlacementMode.EXIT) {
-      // Only allow exit on border
-      if (x === 0 || x === BOARD_SIZE - 1 || y === 0 || y === BOARD_SIZE - 1) {
+      // Toggle: if clicking on same cell, remove exit
+      if (exit && positionsEqual(exit, pos)) {
+        setExit(null);
+      } else {
+        // If clicking on entrance cell, remove entrance
+        if (entrance && positionsEqual(entrance, pos)) {
+          setEntrance(null);
+        }
+        // Place exit at new position
         setExit(pos);
       }
     } else if (mode === PlacementMode.WALL) {
       if (!wallStart) {
+        console.log('Wall start:', pos);
         setWallStart(pos);
       } else {
         // Check if positions are adjacent
@@ -56,6 +71,7 @@ export default function BoardCreator({
         const dy = Math.abs(pos.y - wallStart.y);
         if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
           const newWall: Wall = { from: wallStart, to: pos };
+          console.log('Creating wall:', newWall);
           if (!wallExists(walls, wallStart, pos)) {
             setWalls([...walls, newWall]);
           }
@@ -124,8 +140,8 @@ export default function BoardCreator({
 
       {/* Board */}
       <div className="mb-6">
-        <div className="inline-block bg-slate-900 p-4 rounded-lg">
-          <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)` }}>
+        <div className="inline-block bg-slate-900 p-4 rounded-lg relative">
+          <div className="grid gap-0 relative" style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)` }}>
             {Array.from({ length: BOARD_SIZE }).map((_, y) =>
               Array.from({ length: BOARD_SIZE }).map((_, x) => {
                 const isEntrance = positionsEqual(entrance, { x, y });
@@ -153,27 +169,63 @@ export default function BoardCreator({
                 );
               })
             )}
+            {/* Walls overlay */}
+            <svg
+              className="absolute top-0 left-0 pointer-events-none"
+              style={{
+                width: BOARD_SIZE * 40,
+                height: BOARD_SIZE * 40,
+              }}
+            >
+              {walls.map((wall, idx) => {
+                // Walls should be drawn on the EDGE between cells, not center to center
+                // x = column (horizontal), y = row (vertical)
+                const fromX = wall.from.x;
+                const fromY = wall.from.y;
+                const toX = wall.to.x;
+                const toY = wall.to.y;
+                
+                // Determine if wall is horizontal or vertical
+                if (fromY === toY) {
+                  // Horizontal wall (same row, different columns)
+                  const y = fromY * 40 + 40; // Bottom edge of the row
+                  const x1 = Math.min(fromX, toX) * 40 + 40;
+                  const x2 = x1;
+                  const y1 = (fromY) * 40;
+                  const y2 = (fromY + 1) * 40;
+                  return (
+                    <line
+                      key={idx}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke="#a855f7"
+                      strokeWidth="4"
+                    />
+                  );
+                } else {
+                  // Vertical wall (same column, different rows)
+                  const x = fromX * 40 + 40; // Right edge of the column
+                  const y1 = Math.min(fromY, toY) * 40 + 40;
+                  const y2 = y1;
+                  const x1 = (fromX) * 40;
+                  const x2 = (fromX + 1) * 40;
+                  return (
+                    <line
+                      key={idx}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke="#a855f7"
+                      strokeWidth="4"
+                    />
+                  );
+                }
+              })}
+            </svg>
           </div>
-          {/* Walls overlay */}
-          <svg
-            className="absolute top-0 left-0 pointer-events-none"
-            style={{
-              width: BOARD_SIZE * 40,
-              height: BOARD_SIZE * 40,
-            }}
-          >
-            {walls.map((wall, idx) => (
-              <line
-                key={idx}
-                x1={wall.from.x * 40 + 20}
-                y1={wall.from.y * 40 + 20}
-                x2={wall.to.x * 40 + 20}
-                y2={wall.to.y * 40 + 20}
-                stroke="#a855f7"
-                strokeWidth="4"
-              />
-            ))}
-          </svg>
         </div>
       </div>
 

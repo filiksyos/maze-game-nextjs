@@ -75,22 +75,7 @@ export function canMoveTo(
 }
 
 export function isValidBoardSetup(board: Board): boolean {
-  if (!board.entrance || !board.exit) {
-    return false;
-  }
-  
-  // Entrance and exit should be on borders
-  const isEntranceOnBorder =
-    board.entrance.x === 0 ||
-    board.entrance.x === BOARD_SIZE - 1 ||
-    board.entrance.y === 0 ||
-    board.entrance.y === BOARD_SIZE - 1;
-  
-  const isExitOnBorder =
-    board.exit.x === 0 ||
-    board.exit.x === BOARD_SIZE - 1 ||
-    board.exit.y === 0 ||
-    board.exit.y === BOARD_SIZE - 1;
-
-  return isEntranceOnBorder && isExitOnBorder;
+  // Just check that entrance and exit are placed
+  // No border restriction - entrance/exit can be anywhere
+  return board.entrance !== null && board.exit !== null;
 }
